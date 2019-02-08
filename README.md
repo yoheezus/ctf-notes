@@ -1,5 +1,6 @@
  # CTF Notes
 
+source: https://www.abatchy.com/2016/12/natas-level-17
 From the natas17 challenge. Bruteforce password through SQL injection though there is not output. If there is no output use the `AND sleep()` command in the query to control the response time. If the query was correct i.e char is in there, the `sleep()` will trigger and the response time will be slower. This can be checked in python using `requests`.
 
 ```py
