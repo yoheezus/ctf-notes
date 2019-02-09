@@ -89,3 +89,6 @@ for char in chars: # checks which characters are in the password
         filtered += char
 
 ```
+### natas 19
+
+Anothe brute force however this time the session id was hex'd, the format was  {sessionID}-{username}, the correct user name was admin, therefore it was a matter of bruteforcing the ID
